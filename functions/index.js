@@ -49,8 +49,8 @@ app.get('/channels', (req, res) => {
   channelsRef.once('value', snapshot => {
     let items = new Array();
     snapshot.forEach(childSnapshot => {
-        let cname = childSnapshot.key;
-        items.push(cname);
+      let cname = childSnapshot.key;
+      items.push(cname);
     });
 
     res.header('Content-Type', 'application/json; charset=utf-8');
@@ -125,6 +125,14 @@ app.post('/channels/:cname/messages', (req, res) => {
 
   let messagesRef = admin.database().ref(`channels/${cname}/messages`);
   messagesRef.push(message);
+
+  res.header('Content-Type', 'application/json; charset=utf-8');
+  res.status(201).send({result: "ok"});
+});
+
+app.post('/reset', (req, res) => {
+  createChannel('general');
+  createChannel('random');
 
   res.header('Content-Type', 'application/json; charset=utf-8');
   res.status(201).send({result: "ok"});
