@@ -63,27 +63,44 @@ const createChannel = cname => {
   let date2 = new Date();
   date2.setSeconds(date2.getSeconds() + 1);
   const defaultData = `{
-      "messages" : {
-          "1" : {
-              "body" : "Welcome to #${cname} channel!",
-              "date" : "${date1.toJSON()}",
-              "user" : {
-                  "avatar" : "",
-                  "id" : "robot",
-                  "name" : "Robot"
-              }
-          },
-          "2" : {
-              "body" : "はじめてのメッセージを投稿してみましょう。",
-              "date" : "${date2.toJSON()}",
-              "user" : {
-                  "avatar" : "",
-                  "id" : "robot",
-                  "name" : "Robot"
-              }
-          }
+    "messages" : {
+      "1" : {
+        "body": "Welcome to #${cname} channel!",
+        "date": "${date1.toJSON()}",
+        "user": {
+          "avatar": "",
+          "id": "robot",
+          "name": "Robot"
+        }
+      },
+      "2" : {
+        "body": "はじめてのメッセージを投稿してみましょう。",
+        "date": "${date2.toJSON()}",
+        "user": {
+          "avatar": "",
+          "id": "robot",
+          "name": "Robot"
+        }
       }
+    }
   }`;
 
   channelsRef.child(cname).set(JSON.parse(defaultData));
 };
+
+app.get('/channels/:cname/messages', (req, res) => {
+  let cname = req.params.cname;
+  let messagesRef = admin.database().ref(`channels/${cname}/messages`).orderByChild('date').limitToLast(20);
+  messagesRef.once('value', snapshot => {
+    let items = new Array();
+    snapshot.forEach(childSnapshot => {
+      let message = childSnapshot.val();
+      message.id = childSnapshot.key;
+      items.push(message);
+    });
+    items.reverse();
+
+    res.header('Content-Type', 'application/json; charset=utf-8');
+    res.send({messages: items});
+  });
+});
