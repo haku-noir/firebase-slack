@@ -1,35 +1,45 @@
 const functions = require('firebase-functions');
+
+// // Create and Deploy Your First Cloud Functions
+// /A/ https://firebase.google.com/docs/functions/write-firebase-functions
+//
+// exports.helloWorld = functions.https.onRequest((request, response) => {
+//  response.send("Hello from Firebase!");
+// });
+
 const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
 const express = require('express');
 const app = express();
+
 const cors = require('cors')({origin: true});
 app.use(cors);
 
 const anonymousUser = {
   id: "anon",
-  name: "Anonymouse",
-  avater: ""
+  name: "Anonymous",
+  avatar: ""
 };
 
 const checkUser = (req, res, next) => {
   req.user = anonymousUser;
-
-  if(req.query.auth_token != undefined){
+  if(req.query.auth_token !== undefined){
     let idToken = req.query.auth_token;
-    admin.auth().verifyIdToken(idToken).then(decodeIdToken => {
+    admin.auth().verifyIdToken(idToken).then(decodedIdToken => {
       let authUser = {
-        id: decodeIdToken.user_id,
-        name: decodeIdToken.name,
-        avater: decodeIdToken.picture
+        id: decodedIdToken.user_id,
+        name: decodedIdToken.name,
+        avatar: decodedIdToken.picture
       };
       req.user = authUser;
       next();
     }).catch(error => {
       next();
     });
-  }
+  }else{
+    next();
+  };
 };
 
 app.use(checkUser);
@@ -65,21 +75,21 @@ const createChannel = cname => {
   const defaultData = `{
     "messages" : {
       "1" : {
-        "body": "Welcome to #${cname} channel!",
-        "date": "${date1.toJSON()}",
-        "user": {
-          "avatar": "",
-          "id": "robot",
-          "name": "Robot"
+        "body" : "Welcome to #${cname} channel!",
+        "date" : "${date1.toJSON()}",
+        "user" : {
+          "avatar" : "",
+          "id" : "robot",
+          "name" : "Robot"
         }
       },
       "2" : {
-        "body": "はじめてのメッセージを投稿してみましょう。",
-        "date": "${date2.toJSON()}",
-        "user": {
-          "avatar": "",
-          "id": "robot",
-          "name": "Robot"
+        "body" : "はじめてのメッセージを投稿してみましょう。",
+        "date" : "${date2.toJSON()}",
+        "user" : {
+          "avatar" : "",
+          "id" : "robot",
+          "name" : "Robot"
         }
       }
     }
@@ -119,3 +129,5 @@ app.post('/channels/:cname/messages', (req, res) => {
   res.header('Content-Type', 'application/json; charset=utf-8');
   res.status(201).send({result: "ok"});
 });
+
+exports.v1 = functions.https.onRequest(app);
