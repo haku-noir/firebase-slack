@@ -13,8 +13,23 @@ const anonymousUser = {
   avater: ""
 };
 
-const chackUser = (req, res, next) => {
-  rqq.user = anonymousUser;
+const checkUser = (req, res, next) => {
+  req.user = anonymousUser;
+
+  if(req.query.auth_token != undefined){
+    let idToken = req.query.auth_token;
+    admin.auth().verifyIdToken(idToken).then(decodeIdToken => {
+      let authUser = {
+        id: decodeIdToken.user_id,
+        name: decodeIdToken.name,
+        avater: decodeIdToken.picture
+      };
+      req.user = authUser;
+      next();
+    }).catch(error => {
+      next();
+    });
+  }
 };
 
-app.use(chackUser);
+app.use(checkUser);
